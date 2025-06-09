@@ -1,0 +1,59 @@
+# Ensure script is running as administrator
+
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
+
+    [Security.Principal.WindowsBuiltInRole] "Administrator"))
+
+{
+
+    Write-Warning "You must run this script as an Administrator!"
+
+    exit 1
+
+}
+ 
+Write-Host "🔄 Starting forced Windows Update and Driver Update..." -ForegroundColor Cyan
+ 
+# Step 1: Install required modules
+
+Write-Host "📦 Installing PSWindowsUpdate module..." -ForegroundColor Yellow
+
+Install-PackageProvider -Name NuGet -Force -Confirm:$false
+
+Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
+
+Install-Module -Name PSWindowsUpdate -Force -Confirm:$false
+
+Import-Module PSWindowsUpdate
+ 
+# Step 2: Check for and install Windows updates
+
+Write-Host "⬇️ Checking and installing all available Windows updates..." -ForegroundColor Yellow
+
+Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot
+ 
+# Step 3: Install optional driver updates using Windows Update
+
+Write-Host "📥 Installing driver updates (if any available)..." -ForegroundColor Yellow
+
+Get-WindowsUpdate -MicrosoftUpdate -Category "Drivers" -Install -AcceptAll -IgnoreReboot
+ 
+# Step 4: Use winget to upgrade any drivers or firmware supported via OEM tools
+
+Write-Host "🛠 Checking for OEM tool updates via winget (optional)..." -ForegroundColor Yellow
+
+if (Get-Command winget -ErrorAction SilentlyContinue) {
+
+    winget upgrade --all --accept-package-agreements --accept-source-agreements
+
+} else {
+
+    Write-Host "❌ winget not found. Skipping winget upgrade..." -ForegroundColor Red
+
+}
+ 
+# Step 5: Reboot prompt
+
+Write-Host "`n✅ Updates installed. Please reboot your system to complete the process." -ForegroundColor Green
+
+ 
