@@ -1,0 +1,33 @@
+#Import-Module AzureAD
+Connect-AzureAD
+Parameters: Replace with appropriate values
+#Source: Old user
+$sourceUserPrincipalName = "@corsearch.com"
+#Source:New User
+$targetUserPrincipalName = "@corsearch.com"
+
+# Get the source user and target user
+$sourceUser = Get-AzureADUser -ObjectId $sourceUserPrincipalName
+$targetUser = Get-AzureADUser -ObjectId $targetUserPrincipalName
+
+# Check if both users are found
+if (!$sourceUser) {
+    Write-Host "Source user not found: $sourceUserPrincipalName"
+    return
+}
+
+if (!$targetUser) {
+    Write-Host "Target user not found: $targetUserPrincipalName"
+    return
+}
+
+# Get the groups of the source user
+$sourceUserGroups = Get-AzureADUserMembership -ObjectId $sourceUser.ObjectId
+
+# Add the target user to the groups
+foreach ($group in $sourceUserGroups) {
+    Add-AzureADGroupMember -ObjectId $group.ObjectId -RefObjectId $targetUser.ObjectId
+    Write-Host "Added target user to group: $($group.DisplayName)"
+}
+
+Write-Host "Replication complete. Target user added to groups of source user."
